@@ -1,6 +1,9 @@
 import numpy
 import random
 from optparse import OptionParser
+import matplotlib.pyplot as plt
+import pandas as pd
+from sklearn import decomposition
 
 # loading dataSet
 def loadDataSet(filePath):
@@ -71,8 +74,8 @@ def compareClusters(prevCluster, clusters):
     return True
 
 # Kmeans
-def executeKMeans(data_set, nunber_of_cluster_points):
-    random_choice = random.sample(data_set, nunber_of_cluster_points)
+def executeKMeans(data_set, number_of_cluster_points):
+    random_choice = random.sample(data_set, number_of_cluster_points)
     clusters = [row[2:] for row in random_choice]
     clusters, prevCluster, dict = getNewClusters(data_set,clusters)
 
@@ -152,23 +155,65 @@ def calculateJaccardCoefficient(incidence_matrix):
     jaccardCoefficient = num/den
     return jaccardCoefficient
 
+# perform PCA
+def PCA(dic):
+    c = []
+    data = []
+    for key in dic:
+        for i in range(len(dic[key])):
+            c.append(key)
+            data.append(dic[key][i])
+    finalData = numpy.array(data)
+    labels = numpy.array(c)
+    pca = decomposition.PCA(n_components=2)
+    pca.fit(finalData)
+    finalData = numpy.mat(pca.transform(finalData))
+    return finalData, labels
+
+# plot graph
+def plotGraph(filename, finalData,labels):
+    #create dataframe and group based on labels
+    df = pd.DataFrame(dict(x=numpy.asarray(finalData.T[0])[0], y=numpy.asarray(finalData.T[1])[0], label=labels))
+    groups = df.groupby('label')
+    fig, ax = plt.subplots()
+    ax.margins(0.05)
+
+    #plot all datapoints
+    for name, group in groups:
+        ax.plot(group.x, group.y, marker='o', linestyle='', ms=5, label=name)
+
+    ax.legend()
+    ax.set_title('Algorithm: PCA\n Input file: ' + filename)
+    plt.xlabel('PCA1')
+    plt.ylabel('PCA2')
+
+    plt.savefig('PCA_' + filename + ".png", dpi=300)
+    plt.show()
+
 def main():
     # getting the arguments from command-line and storing them for further use using optionparser
     optparser = OptionParser()
     optparser.add_option('-f', '--inputFile', dest='filename', help='filename of dataset',
                          default='C:/Users/divya/OneDrive/Documents/601/p2/cho.txt')
-    optparser.add_option('-c', '--nunber_of_cluster_points', dest='clustercount', help='number of clusters', default=5, type='int')
+    optparser.add_option('-c', '--number_of_cluster_points', dest='clustercount', help='number of clusters', default=5, type='int')
     (options, args) = optparser.parse_args()
 
     # storing the inputs into the variables
     file_path = options.filename
-    nunber_of_cluster_points = options.clustercount
+    number_of_cluster_points = options.clustercount
 
     # getting dataset from the loadDataSet function by giving file path
     data_set = loadDataSet(file_path);
 
-    # executong Kmeans algorithm
-    clusters, prevCluster, dict = executeKMeans(data_set, nunber_of_cluster_points)
+    # executing Kmeans algorithm
+    clusters, prevCluster, dict = executeKMeans(data_set, number_of_cluster_points)
+    dataForPCA = {}
+    for key in dict:
+        list =[]
+        for gene in dict[key]:
+            list.append(gene.point)
+        dataForPCA[key] = list
+    #print dataForPCA
 
     # create cluster matrix
     cluster_matrix = createClusterMatrix(len(data_set), dict)
@@ -187,5 +232,12 @@ def main():
 
     print randCoefficient
     print jaccardCoefficient
+
+    #perform PCA
+    data, labels = PCA(dataForPCA)
+
+    #plot Graph
+    plotGraph(file_path.split('/')[-1],data,labels)
+
 
 if __name__ == "__main__": main()
