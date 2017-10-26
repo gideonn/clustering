@@ -183,7 +183,7 @@ def plotGraph(filename, finalData,labels):
         ax.plot(group.x, group.y, marker='o', linestyle='', ms=5, label=name)
 
     ax.legend()
-    ax.set_title('Algorithm: PCA\n Input file: ' + filename)
+    ax.set_title('Algorithm: KMeans\n Input file: ' + filename)
     plt.xlabel('PCA1')
     plt.ylabel('PCA2')
 
