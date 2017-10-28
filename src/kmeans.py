@@ -73,13 +73,25 @@ def compareClusters(prevCluster, clusters):
             return False
     return True
 
-# Kmeans
-def executeKMeans(data_set, number_of_cluster_points):
-    random_choice = random.sample(data_set, number_of_cluster_points)
-    clusters = [row[2:] for row in random_choice]
-    clusters, prevCluster, dict = getNewClusters(data_set,clusters)
+# returns cluster with specific gene ids
+def getCluster(data_set, geneIdList):
+    geneData = []
+    for j in range(0, len(data_set)):
+        gene = make_gene(data_set[j])
+        if gene.id in geneIdList:
+            geneData.append(gene.point)
+    return geneData
 
-    while not compareClusters(prevCluster, clusters):
+# Kmeans
+def executeKMeans(data_set, number_of_cluster_points, number_of_iterations, geneIdList):
+    #random_choice = random.sample(data_set, number_of_cluster_points)
+    #clusters = [row[2:] for row in random_choice]
+    clusters = getCluster(data_set, geneIdList)
+    clusters, prevCluster, dict = getNewClusters(data_set,clusters)
+    iter = number_of_iterations
+    #while not compareClusters(prevCluster, clusters):
+    while iter>0:
+        iter-=1
         clusters, prevCluster, dict = getNewClusters(data_set,clusters)
     return clusters, prevCluster, dict
 
@@ -195,18 +207,21 @@ def main():
     optparser = OptionParser()
     optparser.add_option('-f', '--inputFile', dest='filename', help='filename of dataset',
                          default='C:/Users/divya/OneDrive/Documents/601/p2/cho.txt')
-    optparser.add_option('-c', '--number_of_cluster_points', dest='clustercount', help='number of clusters', default=5, type='int')
+    optparser.add_option('-c', '--number_of_cluster_points', dest='clustercount', help='number of clusters', default=3, type='int')
+    optparser.add_option('-i', '--number_of_iterations', dest='iterations', help='number of iterations', default=10, type='int')
     (options, args) = optparser.parse_args()
 
     # storing the inputs into the variables
     file_path = options.filename
     number_of_cluster_points = options.clustercount
+    number_of_iterations = options.iterations
 
     # getting dataset from the loadDataSet function by giving file path
     data_set = loadDataSet(file_path);
 
+    geneIdList = [3,5,9]
     # executing Kmeans algorithm
-    clusters, prevCluster, dict = executeKMeans(data_set, number_of_cluster_points)
+    clusters, prevCluster, dict = executeKMeans(data_set, number_of_cluster_points, number_of_iterations, geneIdList)
     dataForPCA = {}
     for key in dict:
         list =[]
